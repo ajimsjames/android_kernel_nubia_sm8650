@@ -522,25 +522,26 @@ int aw22xxx_play(void * data)
     aw22xxx_init_cfg_update_array((struct aw22xxx *)data);
 	aw22xxx_set_breath_data((struct aw22xxx *)data,&user_para_data[0]);
 	while(1){
-		msleep(duration/30);
-			if(read_idx == write_idx){
-				kthread_status = 0;
-				read_idx = 0;
-			    write_idx = 0;
-				//aw22xxx_cfg_led_off((struct aw22xxx *)data);
-				schedule_work(&aw22xxx->cfg_work);
-				pr_info("%s (!!!while 888)kthread exit\n",__func__);
-				//do_exit(0);
+		if (duration > 0)
+			msleep(duration/30);
+		else
+			msleep(20);
 
+		if(read_idx >= write_idx){
+			kthread_status = 0;
+			read_idx = 0;
+			write_idx = 0;
+			schedule_work(&aw22xxx->cfg_work);
+			pr_info("%s (!!!while 888)kthread exit\n",__func__);
+			break;
 		}
 		if(kthread_status == 0){
 			aw22xxx_cfg_led_off((struct aw22xxx *)data);
 			pr_info("%s kthread exit\n",__func__);
-			//do_exit(1);
+			break;
 		}
 		aw22xxx_set_breath_data((struct aw22xxx *)data,&user_para_data[read_idx*CMD_LINE_LEN]);	
 		read_idx++;
-		
 	}
 	return 1;
 }
